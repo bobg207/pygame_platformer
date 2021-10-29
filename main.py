@@ -17,11 +17,11 @@ class Player:
         self.height = height
         self.velo = 5
         self.x_velo = 0
-        self.y_velo = 0
+        self.y_velo = 3
         self.jumping = False
         self.falling = False
         self.y_counter = 0
-        self.jump_height = 2 * self.height
+        self.jump_height = int(self.height * .6)
 
     def draw_player(self):
         pygame.draw.rect(self.display, self.color, (self.x, self.y, self.width, self.height))
@@ -30,9 +30,8 @@ class Player:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.x_velo = -1 * self.velo
-            self.x += self.x_velo
         elif keys[pygame.K_RIGHT]:
-            self.x += self.velo
+            self.x_velo = self.velo
         else:
             self.x_velo = 0
 
@@ -52,8 +51,8 @@ class Player:
                 self.falling = True
 
         if self.falling:
-            if self.y + self.height == DISPLAY_HEIGHT:
-                self.y = DISPLAY_HEIGHT - self.height
+            if self.y + self.height == DISPLAY_HEIGHT-WALL_BRICK_HEIGHT:
+                self.y = DISPLAY_HEIGHT - WALL_BRICK_HEIGHT - self.height
                 self.falling = False
             else:
                 self.y += self.y_velo
