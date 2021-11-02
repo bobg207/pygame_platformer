@@ -24,10 +24,13 @@ class Player:
         self.jump_height = int(self.height * .6)
 
     def draw_player(self):
-        pygame.draw.rect(self.display, self.color, (self.x, self.y, self.width, self.height))
+        pygame.draw.rect(self.display, self.color,
+                         (self.x, self.y, self.width, self.height))
 
     def player_keys(self):
         keys = pygame.key.get_pressed()
+
+        # set x_velo base on key press
         if keys[pygame.K_LEFT]:
             self.x_velo = -1 * self.velo
         elif keys[pygame.K_RIGHT]:
@@ -35,6 +38,7 @@ class Player:
         else:
             self.x_velo = 0
 
+        # set jump state on Space press
         if keys[pygame.K_SPACE] and self.jumping is False and self.falling is False:
             self.y_counter = 0
             self.jumping = True
@@ -42,6 +46,7 @@ class Player:
     def move_player(self):
         self.x += self.x_velo
 
+        # player movement is jumping, going up
         if self.jumping:
             self.y_counter += 1
             self.y -= self.y_velo
@@ -50,8 +55,9 @@ class Player:
                 self.jumping = False
                 self.falling = True
 
+        # player movement is falling, going down
         if self.falling:
-            if self.y + self.height == DISPLAY_HEIGHT-WALL_BRICK_HEIGHT:
+            if self.y + self.height == DISPLAY_HEIGHT - WALL_BRICK_HEIGHT:
                 self.y = DISPLAY_HEIGHT - WALL_BRICK_HEIGHT - self.height
                 self.falling = False
             else:
@@ -73,16 +79,18 @@ class Ball:
         self.height = height
 
 
-def make_walls():
-    wall_blocks = []
-    for row in range(len(LAYOUT)):
-        y = row * WALL_BRICK_HEIGHT
-        for col in range(len(LAYOUT[0])):
-            x = col * WALL_BRICK_WIDTH
-            if LAYOUT[row][col] == '1':
-                brick = pygame.draw.rect(screen, RED, (x, y, WALL_BRICK_WIDTH, WALL_BRICK_HEIGHT))
-                wall_blocks.append(brick)
-    return wall_blocks
+class Walls():
+    def __init__(self, display, color, x, y, width, height):
+        self.display = display
+        self.color = color
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def make_walls(self):
+        pygame.draw.rect(self.display, self.color,
+                         (self.x, self.y, self.width, self.height))
 
 
 pygame.init()
@@ -93,7 +101,18 @@ pygame.display.set_caption("Game Title")
 clock = pygame.time.Clock()
 player = Player(screen, BLUE,
                 WALL_BRICK_WIDTH * 2,
-                DISPLAY_HEIGHT-WALL_BRICK_HEIGHT-PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT)
+                DISPLAY_HEIGHT - WALL_BRICK_HEIGHT - PLAYER_HEIGHT,
+                PLAYER_WIDTH, PLAYER_HEIGHT)
+
+wall_blocks = []
+for row in range(len(LAYOUT)):
+    y_loc = row * WALL_BRICK_HEIGHT
+    for col in range(len(LAYOUT[0])):
+        x_loc = col * WALL_BRICK_WIDTH
+        if LAYOUT[row][col] == '1':
+            brick = Walls(screen, RED, x_loc, y_loc, WALL_BRICK_WIDTH, WALL_BRICK_HEIGHT)
+            wall_blocks.append(brick)
+
 running = True
 
 while running:
@@ -103,7 +122,9 @@ while running:
             running = False
 
     screen.fill(WHITE)
-    make_walls()
+
+    for block in wall_blocks:
+        block.make_walls()
     player.control_player()
 
     pygame.display.flip()
