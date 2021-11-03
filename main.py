@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 import os
+import random
 
 win_x = 50
 win_y = 50
@@ -21,7 +22,7 @@ class Player:
         self.jumping = False
         self.falling = False
         self.y_counter = 0
-        self.jump_height = int(self.height * .6)
+        self.jump_height = self.height
 
     def draw_player(self):
         pygame.draw.rect(self.display, self.color,
@@ -63,6 +64,25 @@ class Player:
             else:
                 self.y += self.y_velo
 
+    def on_platform(self, other):
+        # for head bump
+        if self.y <= other.y + other.height and \
+                (other.x <= self.x + self.width <= other.x + other.width or \
+                 other.x <= self.x <= other.x + other.width):
+            self.jumping = False
+            self.falling = True
+        # front or back
+        if self.x + self.width >= other.x and \
+                (self.y <= other.y + other.height and
+                 self.y + self.height >= other.y):
+            self.x_velo = 0
+
+
+    def is_collided(self, other):
+        if (self.x <= other.x <= self.x + self.width or other.x <= self.x <= other.x + other.width) and \
+                (self.y + self.height >= other.y >= self.y):
+            return True
+
     def control_player(self):
         self.player_keys()
         self.move_player()
@@ -77,9 +97,20 @@ class Ball:
         self.y = y
         self.width = width
         self.height = height
+        self.x_velo = random.randint(1, 4)
+
+    def make_ball(self):
+        pygame.draw.circle(self.display, self.color,
+                           (self.x, self.y), self.width)
+
+    def update(self):
+        self.x -= self.x_velo
+
+        if self.x < -1 * self.width:
+            self.x = random.randint(DISPLAY_WIDTH, DISPLAY_WIDTH + 50)
 
 
-class Walls():
+class Walls:
     def __init__(self, display, color, x, y, width, height):
         self.display = display
         self.color = color
@@ -89,6 +120,20 @@ class Walls():
         self.height = height
 
     def make_walls(self):
+        pygame.draw.rect(self.display, self.color,
+                         (self.x, self.y, self.width, self.height))
+
+
+class Platform:
+    def __init__(self, display, color, x, y, width, height):
+        self.display = display
+        self.color = color
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def make_platform(self):
         pygame.draw.rect(self.display, self.color,
                          (self.x, self.y, self.width, self.height))
 
@@ -104,7 +149,16 @@ player = Player(screen, BLUE,
                 DISPLAY_HEIGHT - WALL_BRICK_HEIGHT - PLAYER_HEIGHT,
                 PLAYER_WIDTH, PLAYER_HEIGHT)
 
+enemies = []
+for i in range(5):
+    ball_height = 20
+    rand_x = random.randint(DISPLAY_WIDTH, DISPLAY_WIDTH + 50)
+    y_loc = DISPLAY_HEIGHT - WALL_BRICK_HEIGHT - ball_height
+    ball = Ball(screen, BLUE, rand_x, y_loc, ball_height, ball_height)
+    enemies.append(ball)
+
 wall_blocks = []
+platforms = []
 for row in range(len(LAYOUT)):
     y_loc = row * WALL_BRICK_HEIGHT
     for col in range(len(LAYOUT[0])):
@@ -112,6 +166,9 @@ for row in range(len(LAYOUT)):
         if LAYOUT[row][col] == '1':
             brick = Walls(screen, RED, x_loc, y_loc, WALL_BRICK_WIDTH, WALL_BRICK_HEIGHT)
             wall_blocks.append(brick)
+        elif LAYOUT[row][col] == '2':
+            platf = Platform(screen, GREEN, x_loc, y_loc, WALL_BRICK_WIDTH, 20)
+            platforms.append(platf)
 
 running = True
 
@@ -125,6 +182,18 @@ while running:
 
     for block in wall_blocks:
         block.make_walls()
+
+    for enemy in enemies:
+        enemy.make_ball()
+        enemy.update()
+
+        # if player.is_collided(enemy):
+        #     running = False
+
+    for platform in platforms:
+        platform.make_platform()
+        player.on_platform(platform)
+
     player.control_player()
 
     pygame.display.flip()
