@@ -1,3 +1,4 @@
+import asyncio
 import pygame
 from settings import *
 import os
@@ -67,7 +68,7 @@ class Player:
     def on_platform(self, other):
         # for head bump
         if self.y <= other.y + other.height and \
-                (other.x <= self.x + self.width <= other.x + other.width or \
+                (other.x <= self.x + self.width <= other.x + other.width or
                  other.x <= self.x <= other.x + other.width):
             self.jumping = False
             self.falling = True
@@ -76,7 +77,6 @@ class Player:
                 (self.y <= other.y + other.height and
                  self.y + self.height >= other.y):
             self.x_velo = 0
-
 
     def is_collided(self, other):
         if (self.x <= other.x <= self.x + self.width or other.x <= self.x <= other.x + other.width) and \
@@ -164,40 +164,46 @@ for row in range(len(LAYOUT)):
     for col in range(len(LAYOUT[0])):
         x_loc = col * WALL_BRICK_WIDTH
         if LAYOUT[row][col] == '1':
-            brick = Walls(screen, RED, x_loc, y_loc, WALL_BRICK_WIDTH, WALL_BRICK_HEIGHT)
+            brick = Walls(screen, RED, x_loc, y_loc,
+                          WALL_BRICK_WIDTH, WALL_BRICK_HEIGHT)
             wall_blocks.append(brick)
         elif LAYOUT[row][col] == '2':
             platf = Platform(screen, GREEN, x_loc, y_loc, WALL_BRICK_WIDTH, 20)
             platforms.append(platf)
 
-running = True
 
-while running:
-    for event in pygame.event.get():
+async def main():
+    running = True
 
-        if event.type == pygame.QUIT:
-            running = False
+    while running:
+        for event in pygame.event.get():
 
-    screen.fill(WHITE)
+            if event.type == pygame.QUIT:
+                running = False
 
-    for block in wall_blocks:
-        block.make_walls()
+        screen.fill(WHITE)
 
-    for enemy in enemies:
-        enemy.make_ball()
-        enemy.update()
+        for block in wall_blocks:
+            block.make_walls()
 
-        # if player.is_collided(enemy):
-        #     running = False
+        for enemy in enemies:
+            enemy.make_ball()
+            enemy.update()
 
-    for platform in platforms:
-        platform.make_platform()
-        player.on_platform(platform)
+            # if player.is_collided(enemy):
+            #     running = False
 
-    player.control_player()
+        for platform in platforms:
+            platform.make_platform()
+            player.on_platform(platform)
 
-    pygame.display.flip()
+        player.control_player()
 
-    clock.tick(FPS)
+        pygame.display.flip()
 
-pygame.quit()
+        clock.tick(FPS)
+        await asyncio.sleep(0)
+
+    pygame.quit()
+
+asyncio.run(main())
